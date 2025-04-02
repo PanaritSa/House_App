@@ -214,18 +214,39 @@ def show_house_details(row):
     st.write(f"**Facilities:** {row['facilities']}")
     st.write(f"**Nearby Places:** {row['magnet']}")
     
-    # === Estimated Mortgage Calculation ===
-    price = float(row["price"])
-    loan_years = 30
-    annual_interest = 0.05
-    monthly_interest = annual_interest / 12
-    months = loan_years * 12
+    with st.expander("💸 Estimated Mortgage Calculator"):
+        property_price = float(row["price"])
+        
+        # Inputs
+        downpayment_percent = st.slider("Downpayment (%)", 0, 50, 10, step=1)
+        interest_rate = st.number_input("Interest Rate (% per year)", min_value=0.0, max_value=15.0, value=5.0, step=0.1)
+        loan_years = st.number_input("Loan Tenure (years)", min_value=1, max_value=40, value=30)
 
-    if price > 0:
-        monthly_payment = price * monthly_interest * (1 + monthly_interest)**months / ((1 + monthly_interest)**months - 1)
-        st.write(f"**Estimated Mortgage (30 yrs @ 5%):** {monthly_payment:,.0f} THB / month")
-    else:
-        st.write("**Estimated Mortgage:** -")
+        # Calculations
+        downpayment = property_price * downpayment_percent / 100
+        loan_amount = property_price - downpayment
+        monthly_interest = interest_rate / 100 / 12
+        months = loan_years * 12
+
+        if loan_amount > 0 and monthly_interest > 0:
+            monthly_payment = loan_amount * monthly_interest * (1 + monthly_interest) ** months / ((1 + monthly_interest) ** months - 1)
+            total_payment = monthly_payment * months
+            total_interest = total_payment - loan_amount
+            principal_pct = loan_amount / total_payment * 100
+            interest_pct = total_interest / total_payment * 100
+
+            # Output
+            st.markdown(f"### 💰 Est. Monthly Payment: **฿ {monthly_payment:,.0f} / mo**")
+            st.progress(int(principal_pct), text=f"📘 Principal: ฿ {loan_amount:,.0f} ({principal_pct:.0f}%)")
+            st.progress(int(interest_pct), text=f"💸 Interest: ฿ {total_interest:,.0f} ({interest_pct:.0f}%)")
+
+            st.markdown("---")
+            st.markdown(f"#### 🧾 Upfront Cost")
+            st.write(f"🔹 Downpayment: **฿ {downpayment:,.0f}** ({downpayment_percent}%)")
+            st.write(f"🔹 Loan Amount: **฿ {loan_amount:,.0f}** ({100 - downpayment_percent}%)")
+        else:
+            st.warning("กรุณากรอกข้อมูลให้ครบและถูกต้องเพื่อคำนวณสินเชื่อ")
+
 
     lat, lon = row.get("latitude"), row.get("longitude")
     if lat and lon:
