@@ -17,6 +17,7 @@ from tensorflow.keras.layers import GlobalMaxPooling2D
 from streamlit_folium import st_folium
 import folium
 from geopy.distance import geodesic
+import matplotlib.pyplot as plt
 
 # === Load Resources ===
 db_name = "house_database.db"
@@ -244,6 +245,39 @@ def show_house_details(row):
             st.markdown(f"#### 🧾 Upfront Cost")
             st.write(f"🔹 Downpayment: **฿ {downpayment:,.0f}** ({downpayment_percent}%)")
             st.write(f"🔹 Loan Amount: **฿ {loan_amount:,.0f}** ({100 - downpayment_percent}%)")
+            
+            # คำนวณเงินต้น/ดอกเบี้ยรายเดือนแบบลดต้นลดดอก
+            schedule = []
+            balance = loan_amount
+
+            for year in range(1, loan_years + 1):
+                principal_year = 0
+                interest_year = 0
+                for month in range(1, 13):
+                    interest = balance * monthly_interest
+                    principal = monthly_payment - interest
+                    balance -= principal
+                    principal_year += principal
+                    interest_year += interest
+                schedule.append({
+                    "Year": year,
+                    "Principal": max(principal_year, 0),
+                    "Interest": max(interest_year, 0)
+                })
+
+            schedule_df = pd.DataFrame(schedule)
+
+            # วาดกราฟ
+            st.markdown("#### 📊 Repayment Breakdown by Year")
+
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.bar(schedule_df["Year"], schedule_df["Principal"], label="Principal", alpha=0.7)
+            ax.bar(schedule_df["Year"], schedule_df["Interest"], bottom=schedule_df["Principal"], label="Interest", alpha=0.7)
+            ax.set_xlabel("Year")
+            ax.set_ylabel("Amount (THB)")
+            ax.set_title("Annual Repayment Breakdown")
+            ax.legend()
+            st.pyplot(fig)
         else:
             st.warning("กรุณากรอกข้อมูลให้ครบและถูกต้องเพื่อคำนวณสินเชื่อ")
 
