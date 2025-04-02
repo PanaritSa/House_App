@@ -213,6 +213,20 @@ def show_house_details(row):
     st.write(f"**Area:** {row['area_size']} sqm")
     st.write(f"**Facilities:** {row['facilities']}")
     st.write(f"**Nearby Places:** {row['magnet']}")
+    
+    # === Estimated Mortgage Calculation ===
+    price = float(row["price"])
+    loan_years = 30
+    annual_interest = 0.05
+    monthly_interest = annual_interest / 12
+    months = loan_years * 12
+
+    if price > 0:
+        monthly_payment = price * monthly_interest * (1 + monthly_interest)**months / ((1 + monthly_interest)**months - 1)
+        st.write(f"**Estimated Mortgage (30 yrs @ 5%):** {monthly_payment:,.0f} THB / month")
+    else:
+        st.write("**Estimated Mortgage:** -")
+
     lat, lon = row.get("latitude"), row.get("longitude")
     if lat and lon:
         icon_data = [{
