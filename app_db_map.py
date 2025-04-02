@@ -432,20 +432,24 @@ elif st.session_state.page == "Filter":
             (df["price"].astype(float) >= min_price) &
             (df["price"].astype(float) <= max_price)
         ]
+
         if location_input:
             results = results[results["address"].str.contains(location_input, case=False, na=False)]
+
         if selected_facility_tags:
             results = results[
                 results["facilities"].apply(
-                    lambda x: any(tag in x for tag in selected_facility_tags) if pd.notna(x) else False
+                    lambda x: any(tag.strip() in x.split(",") for tag in selected_facility_tags) if pd.notna(x) else False
                 )
             ]
+
         if selected_nearby_tags:
             results = results[
                 results["magnet"].apply(
-                    lambda x: any(tag in x for tag in selected_nearby_tags) if pd.notna(x) else False
+                    lambda x: any(tag.strip() in x.split(",") for tag in selected_nearby_tags) if pd.notna(x) else False
                 )
             ]
+
         st.session_state.search_results = results.to_dict(orient="records")
         st.session_state.previous_page = "Filter"
         st.rerun()
